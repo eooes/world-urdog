@@ -25,11 +25,11 @@ export function buildLighting(scene) {
   scene.add(sun, sun.target);
 
   // Hemisphere light matched to Nocturne palette
-  const hemi = new THREE.HemisphereLight(0x9baeff, 0x2a4a2a, 1.05);
+  const hemi = new THREE.HemisphereLight(0x9baeff, 0x2a4a2a, 1.35);
   scene.add(hemi);
 
-  // Soft ambient
-  const amb = new THREE.AmbientLight(0x8090cc, 0.45);
+  // Soft ambient — prevents pitch black shadows
+  const amb = new THREE.AmbientLight(0x8090cc, 0.55);
   scene.add(amb);
 
   // Subtle cool fill from behind

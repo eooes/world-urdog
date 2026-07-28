@@ -164,7 +164,7 @@ export function buildTrees(scene) {
   const foliGeo = new THREE.ConeGeometry(1.5, 4.2, 7);
   const foli = new THREE.InstancedMesh(
     foliGeo,
-    new THREE.MeshBasicMaterial({ color: 0x224422 }),  // dark — below bloom threshold
+    new THREE.MeshStandardMaterial({ color: 0x3a6b3a, roughness: 0.7, metalness: 0.0 }),
     spots.length,
   );
   trunk.castShadow = foli.castShadow = true;
@@ -212,9 +212,11 @@ export function buildRocks(scene) {
   const geo = new THREE.IcosahedronGeometry(2.4, 0);
   const rocks = new THREE.InstancedMesh(
     geo,
-    new THREE.MeshBasicMaterial({
+    new THREE.MeshStandardMaterial({
       map: rockTex,
-      color: 0xcccccc,
+      color: 0x888888,
+      roughness: 0.8,
+      metalness: 0.05,
     }),
     spots.length,
   );
