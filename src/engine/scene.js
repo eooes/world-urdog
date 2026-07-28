@@ -28,8 +28,8 @@ export function buildLighting(scene) {
   const hemi = new THREE.HemisphereLight(0x9baeff, 0x2a4a2a, 1.35);
   scene.add(hemi);
 
-  // Soft ambient — prevents pitch black shadows
-  const amb = new THREE.AmbientLight(0x8090cc, 0.55);
+  // Soft ambient — ensures characters are always visible
+  const amb = new THREE.AmbientLight(0xaabbcc, 0.7);
   scene.add(amb);
 
   // Subtle cool fill from behind

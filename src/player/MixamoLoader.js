@@ -172,16 +172,24 @@ export function createMixamoAvatar() {
       obj.castShadow    = true;
       obj.receiveShadow = true;
 
-      const oldMat = obj.material;
-      obj.material = new THREE.MeshPhongMaterial({
+      const mat = new THREE.MeshLambertMaterial({
         map: tex,
-        shininess: 10,
-        specular: 0x111111,
+        color: 0xffffff,
+        emissive: 0x333333,
         skinning: true,
       });
-      if (oldMat) oldMat.dispose();
+
+      // Handle multi-material meshes
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach(m => m.dispose());
+        obj.material = obj.material.map(() => mat);
+      } else {
+        if (obj.material) obj.material.dispose();
+        obj.material = mat;
+      }
     }
   });
+  console.log('[Mixamo] avatar created with LambertMaterial', inner);
   const group = new THREE.Group();
   group.add(inner);
   const mixer = new THREE.AnimationMixer(inner);
