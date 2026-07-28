@@ -172,24 +172,19 @@ export function createMixamoAvatar() {
       obj.castShadow    = true;
       obj.receiveShadow = true;
 
-      const mat = new THREE.MeshLambertMaterial({
-        map: tex,
-        color: 0xffffff,
-        emissive: 0x333333,
-        skinning: true,
-      });
-
-      // Handle multi-material meshes
+      // Dispose old materials (FBX can have array materials)
       if (Array.isArray(obj.material)) {
         obj.material.forEach(m => m.dispose());
-        obj.material = obj.material.map(() => mat);
-      } else {
-        if (obj.material) obj.material.dispose();
-        obj.material = mat;
+      } else if (obj.material) {
+        obj.material.dispose();
       }
+
+      obj.material = new THREE.MeshBasicMaterial({
+        map: tex,
+        skinning: true,
+      });
     }
   });
-  console.log('[Mixamo] avatar created with LambertMaterial', inner);
   const group = new THREE.Group();
   group.add(inner);
   const mixer = new THREE.AnimationMixer(inner);
