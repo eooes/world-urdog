@@ -14,6 +14,9 @@ export class SkySystem {
     // Smooth transition state
     this._currentTint = 0.95;
     this._targetTint = 0.95;
+    // Red alert mode
+    this._redAlert = false;
+    this._redTimer = 0;
     // Palette presets (top, mid, night)
     this._palettes = [
       { top: 0x3d8ae6, mid: 0x9fd2f7, night: 0x0d1230 },  // day
@@ -149,9 +152,31 @@ export class SkySystem {
     this._targetPalette = this._palettes[paletteIdx];
   }
 
+  // Trigger red-alert sky for `duration` seconds
+  flashRed(duration) {
+    this._redAlert = true;
+    this._redTimer = duration;
+  }
+
   update(dt, t) {
     // Update cloud animation time
     this.uniforms.uTime.value = t;
+
+    // Red alert handling
+    if (this._redAlert) {
+      this._redTimer -= dt;
+      if (this._redTimer <= 0) {
+        this._redAlert = false;
+        this._redTimer = 0;
+      }
+      // Override sky to deep red during alert
+      const r = Math.min(this._redTimer / 2.0, 1.0);
+      this.uniforms.top.value.setRGB(0.15 * r, 0.01 * r, 0.02 * r);
+      this.uniforms.mid.value.setRGB(0.2 * r, 0.01 * r, 0.015 * r);
+      this.uniforms.bot.value.setRGB(0.12 * r, 0.01 * r, 0.01 * r);
+      this.uniforms.tint.value = 1;
+      return;
+    }
 
     // Smooth tint transition (5-second lerp)
     const lerpFactor = dt / 5.0;

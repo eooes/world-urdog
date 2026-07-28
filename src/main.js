@@ -10,7 +10,7 @@ import { buildTerrain, buildTrees, buildRocks } from './world/terrain.js';
 import { SkySystem }          from './world/skybox.js';
 import {
   buildTripod, buildPillarHall, buildBigScreen,
-  buildSkyNumbers, buildMotes, buildDarkBlob,
+  buildSkyNumbers, buildMotes, buildDarkBlob, buildCountdown,
 } from './world/environment.js';
 import { buildEvangelionCrosses } from './world/EvangelionCrosses.js';
 import { buildGrassField } from './world/GrassField.js';  // MdsGzS exact shader
@@ -104,7 +104,7 @@ async function main() {
   colliders.push(...pillarColliders);
 
   const bigScreen  = buildBigScreen(scene);
-  const skyNums    = buildSkyNumbers(scene);
+  const countdown  = buildCountdown(scene);
   const motes      = buildMotes(scene);
   const { blob, basePositions, material: blobMat } = buildDarkBlob(scene);
 
@@ -321,10 +321,37 @@ async function main() {
     /* -- Character shader time -- */
     updateCharacterTime(t);
 
-    /* -- Sky numbers bob -- */
-    skyNums.children.forEach(sp => {
-      sp.position.y = sp.userData.baseY + Math.sin(t * sp.userData.spin) * 1.2;
-    });
+    /* -- Countdown timer (999 → 0, red sky at 0, loop) -- */
+    if (countdown.redMode) {
+      countdown.redTimer -= dt;
+      countdown.sprite.position.y = 80 + Math.sin(t * 3) * 3; // shake during red alert
+      if (countdown.redTimer <= 0) {
+        // Red alert over — reset
+        countdown.redMode = false;
+        countdown.value = 999;
+        countdown.accum = 0;
+        countdown.setText(999);
+        sky.uniforms.tint.value = 0.95; // restore normal sky via update()
+      }
+    } else {
+      countdown.accum += dt;
+      if (countdown.accum >= 1.0) {
+        countdown.accum -= 1.0;
+        countdown.value--;
+        countdown.setText(countdown.value);
+      }
+      if (countdown.value <= 0) {
+        // Trigger red alert
+        countdown.redMode = true;
+        countdown.redTimer = 30;
+        countdown.value = 0;
+        countdown.accum = 0;
+        countdown.setText(0);
+        sky.flashRed(30);
+      }
+      // Gentle bob during normal countdown
+      countdown.sprite.position.y = 80 + Math.sin(t * 0.5) * 1.5;
+    }
 
     /* -- Blob deform -- */
     const bPos  = blob.geometry.attributes.position;

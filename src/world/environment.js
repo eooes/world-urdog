@@ -112,36 +112,51 @@ export function buildBigScreen(scene) {
   };
 }
 
-export function buildSkyNumbers(scene) {
-  const group = new THREE.Group();
-  scene.add(group);
+export function buildSkyNumbers(scene) { return new THREE.Group(); }  // removed — replaced by countdown
 
-  for (let i = 0; i < 16; i++) {
-    const time = `00:0${1 + ((Math.random() * 3) | 0)}:${(10 + ((Math.random() * 50) | 0))}`;
-    const cv = document.createElement('canvas');
-    cv.width = 256; cv.height = 96;
-    const ctx = cv.getContext('2d');
-    ctx.font = '700 66px "JetBrains Mono", monospace';
-    ctx.fillStyle = 'rgba(231,200,106,0.92)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(231,200,106,0.6)';
-    ctx.shadowBlur = 8;
-    ctx.fillText(time, 128, 52);
-    const tex = new THREE.CanvasTexture(cv);
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.3 }));
-    sprite.scale.set(9, 3.4, 1);
-    sprite.position.set(
-      (Math.random() - 0.5) * 220,
-      24 + Math.random() * 44,
-      (Math.random() - 0.5) * 220 - 30,
-    );
-    sprite.userData.spin = 0.2 + Math.random() * 0.5;
-    sprite.userData.baseY = sprite.position.y;
-    group.add(sprite);
-  }
+export function buildCountdown(scene) {
+  const cv = document.createElement('canvas');
+  cv.width = 512; cv.height = 256;
+  const ctx = cv.getContext('2d');
+  ctx.font = '700 180px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#e7c86a';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(231,200,106,0.7)';
+  ctx.shadowBlur = 20;
+  ctx.fillText('999', 256, 128);
+  const tex = new THREE.CanvasTexture(cv);
 
-  return group;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: tex, transparent: true, depthWrite: false, opacity: 0.85, fog: false,
+  }));
+  sprite.scale.set(18, 9, 1);
+  sprite.position.set(0, 80, -80);
+  scene.add(sprite);
+
+  return {
+    sprite,
+    canvas: cv,
+    ctx,
+    tex,
+    value: 999,
+    redMode: false,
+    redTimer: 0,
+    accum: 0,          // seconds accumulator
+    setText(n) {
+      const s = String(Math.max(0, Math.floor(n))).padStart(3, '0');
+      ctx.clearRect(0, 0, 512, 256);
+      if (this.redMode) {
+        ctx.fillStyle = '#ff2020';
+        ctx.shadowColor = 'rgba(255,0,0,0.9)';
+      } else {
+        ctx.fillStyle = '#e7c86a';
+        ctx.shadowColor = 'rgba(231,200,106,0.7)';
+      }
+      ctx.fillText(s, 256, 128);
+      tex.needsUpdate = true;
+    },
+  };
 }
 
 export function buildMotes(scene) {
