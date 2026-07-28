@@ -104,6 +104,7 @@ async function main() {
   colliders.push(...pillarColliders);
 
   const bigScreen  = buildBigScreen(scene);
+  bigScreen.mesh.visible = false;  // hide until black-box issue resolved
   const countdown  = buildCountdown(scene);
   const motes      = buildMotes(scene);
   const { blob, basePositions, material: blobMat } = buildDarkBlob(scene);

@@ -17,8 +17,9 @@ export class Renderer {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.VSMShadowMap;
     this.renderer.info.autoReset = false;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    // ACES tone mapping disabled — may cause rendering issues with ShaderMaterials
+    // this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    // this.renderer.toneMappingExposure = 1.1;
 
     this.composer = null;
     this.glitchPass = null;
