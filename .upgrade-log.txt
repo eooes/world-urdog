@@ -1,0 +1,41 @@
+All checks pass. Here's the complete summary:
+
+---
+
+## Files created / modified
+
+**New files:**
+- `src/player/ModelLoader.js` — async GLTFLoader + SkeletonUtils; normalises every GLB to 1.8 m; graceful per-model fallback
+- `src/player/Animator.js` — rigged (detective: bone-rotation walk/run/jump + 8 emote poses) and static (paladin/woman: squash-and-stretch) animation in one class
+- `src/player/CapeCloth.js` — 10 × 14 Verlet cloth for paladin cape; gravity + wind; 2 constraint passes; max 12 active cloths
+- `src/world/GrassField.js` — 4 200 crossed-quad InstancedMesh; `onBeforeCompile` vertex shader wind sway; one draw call
+- `src/world/GodRays.js` — additive Sprite god rays + glow spots at stage, tripods, and ambient sky positions; pulse with audio intensity
+- `src/world/wind.js` — global `{ dir, strength }` singleton updated once per frame
+
+**Modified files:**
+- `src/player/avatar.js` — full rewrite: `buildAvatar()` → GLB model via ModelLoader + Animator + CapeCloth + blob shadow disc; procedural angel as fallback
+- `src/player/LocalPlayer.js` — stores `modelIndex`, passes it to network state and `animateAvatar`
+- `src/player/RemotePlayer.js` — accepts `modelIndex` param, passes emote ID to `animateAvatar`, disposes cape on remove
+- `src/player/NpcCrowd.js` — cycles `modelIndex = i % MODEL_COUNT` across NPCs
+- `src/engine/scene.js` — fog `FogExp2(0x1a1a3a, 0.0062)`, shadow box narrowed to 30 m, warm stage PointLight added
+- `src/main.js` — `loadAllModels()` await, grass/godRays/wind wired into loop, texel-snapped shadow follows player, fog colour sync on ENV_CHANGE
+
+## node --check results
+All 12 files: **OK**
+
+## curl results
+All 11 URLs (index.html, 6 JS modules, 3 GLBs): **200**
+
+Key tunables: `GRASS_COUNT` and blade height in `GrassField.js`; `MAX_CLOTHS` / anchor positions in `CapeCloth.js`; `WALK_THIGH`/`RUN_LEAN` amplitudes in `Animator.js`; fog density in `scene.js`. Full details in `UPGRADE_NOTES.md`.
+ `src/player/LocalPlayer.js` | Uses Animator + wind-aware cape; `modelIndex` in network state; tracks `currentEmoteId` |
+| `src/player/RemotePlayer.js` | Accepts `modelIndex`; calls `animateAvatar` with `dt`, `emoteId`, `wind` |
+| `src/player/NpcCrowd.js` | Cycles `modelIndex` across all 3 models per NPC |
+| `src/engine/scene.js` | `FogExp2(0x1a1a3a, 0.0062)` night haze; 30 m tight shadow box; warm stage `PointLight` |
+| `src/main.js` | Awaits `loadAllModels()` before creating players; per-frame `wind.update`, `grassField.setWind`, `godRays.update`, texel-snapped shadow camera |
+
+## Verification results
+
+**`node --check`**: ✅ All 12 files — zero syntax errors
+
+**HTTP 200 (via `npx serve`)**:
+- `index.html`, all 6 new `.js` modules, all 3 `.glb` files → 200

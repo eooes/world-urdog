@@ -1,0 +1,97 @@
+SHIN SEKAI — 3D Virtual Concert
+================================
+
+QUICK START (client only, offline mode)
+-----------------------------------------
+Option A — Node.js serve:
+  1. Open terminal in this folder (game/)
+  2. npx serve . -p 8080
+  3. Open http://localhost:8080
+
+Option B — VS Code Live Server:
+  Right-click index.html → "Open with Live Server"
+
+Option C — Python:
+  python -m http.server 8080
+  Then open http://localhost:8080
+
+NOTE: Must be served over HTTP (not file://) because ES modules require CORS.
+
+
+WITH MULTIPLAYER SERVER
+-----------------------
+  Terminal 1 (server):
+    cd server
+    npm install
+    node index.js
+    # Listens on ws://localhost:3030
+
+  Terminal 2 (client):
+    cd ..
+    npx serve . -p 8080
+
+  Open http://localhost:8080 in two browser tabs to see two players.
+
+
+CONTROLS
+--------
+  Desktop:
+    WASD / Arrow keys  — Move
+    Shift              — Run
+    Mouse drag         — Orbit camera
+    Mouse wheel        — Zoom
+    Space              — Jump
+    F                  — Toggle fly mode
+    E                  — Emote wheel
+    Enter              — Open chat
+    Esc                — Close panels
+
+  Mobile:
+    Left joystick  — Move
+    Right swipe    — Orbit camera
+    Action buttons — Jump / fly / emote / chat
+
+
+FILE STRUCTURE
+--------------
+  game/
+    index.html                  Entry point (importmap → CDN three.js)
+    package.json                npm scripts
+    src/
+      main.js                   Game bootstrap + main loop
+      constants.js              Shared config / enums
+      engine/
+        renderer.js             WebGL renderer + glitch post-processing
+        scene.js                Scene, lighting, camera
+        camera.js               Third-person spring-arm + occlusion
+      world/
+        terrain.js              Procedural terrain + trees + rocks
+        skybox.js               Sky dome shader + clouds
+        environment.js          Tripods, pillar hall, big screen, VFX
+      player/
+        avatar.js               Angel avatar mesh builder + animation
+        LocalPlayer.js          Input → physics → anim state machine
+        RemotePlayer.js         Network lerp interpolation
+        NpcCrowd.js             Simulated NPC crowd (offline)
+        controls/
+          KeyboardMouse.js      WASD + mouse
+          TouchJoystick.js      Mobile joystick + camera drag
+      network/
+        RoomClient.js           WebSocket client + offline mock fallback
+      audio/
+        AudioTimeline.js        Web Audio clock + JSON event runner
+      shaders/
+        toon.js                 Toon material helper + glitch GLSL
+      ui/
+        HUD.js                  FPS / draw call / triangle overlay
+        ChatBar.js              Chat input + floating text bubbles
+        EmoteWheel.js           Radial emote wheel (8 emotes)
+        SettingsPanel.js        Color picker + username
+        SystemsPanel.js         5-phase roadmap status
+      styles/
+        main.css                All UI styles
+      timeline/
+        events.json             Example event timeline
+    server/
+      index.js                  Node.js WebSocket room server
+      package.json              Server deps (ws)

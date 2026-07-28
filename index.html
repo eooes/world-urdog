@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SHIN SEKAI — 3D Virtual Concert</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/styles/main.css">
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.168.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.168.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app">
+  <canvas id="canvas"></canvas>
+
+  <!-- ── Brand / clock ── -->
+  <div id="brand">
+    <div class="kick">SHIN SEKAI · Virtual Concert</div>
+    <h1 id="sceneName">Secret Sky — Overworld</h1>
+    <div id="clock">
+      <div>SET <span class="set-t" id="setTime">00:00</span> · <b id="trackName">— warmup —</b></div>
+      <div>ROOM <span id="roomTag">——</span> · <b id="pop">1</b> present</div>
+    </div>
+  </div>
+
+  <!-- ── Perf HUD ── -->
+  <div id="perf">
+    <div class="hdr">Performance</div>
+    <div class="row"><span class="lab">FPS</span><span class="val" id="pFps">–</span></div>
+    <div class="row"><span class="lab">Draw calls</span><span class="val" id="pDraw">–</span></div>
+    <div class="row"><span class="lab">Triangles</span><span class="val" id="pTri">–</span></div>
+    <div class="row"><span class="lab">Net tick</span><span class="val ok" id="pNet">– Hz</span></div>
+  </div>
+
+  <!-- ── Systems panel ── -->
+  <div id="sysbtn"><button class="chip" id="openSys"><span class="dot"></span>Systems · 5 phases</button></div>
+  <div id="systems">
+    <button class="close" id="closeSys">×</button>
+    <h2>Build systems</h2>
+    <div class="sub">Every feature mapped to its roadmap phase. Green = live in this build.</div>
+    <div id="phaseList"></div>
+  </div>
+
+  <!-- ── Controls hint ── -->
+  <div id="hint">
+    Drag to look ·
+    <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> move ·
+    <span class="kbd">Shift</span> run ·
+    <span class="kbd">Space</span> jump ·
+    <span class="kbd">F</span> fly ·
+    <span class="kbd">E</span> emote ·
+    <span class="kbd">Enter</span> chat
+  </div>
+
+  <!-- ── Mobile joystick ── -->
+  <div id="joy"><div class="nub"></div></div>
+
+  <!-- ── Right action buttons ── -->
+  <div id="actions">
+    <div class="abtn" id="chatBtn" title="Chat (Enter)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19l1-4.2A7.5 7.5 0 1 1 20 11.5Z" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="abtn" id="emoteBtn" title="Emote (E)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M8 14.5c1 1.4 2.4 2 4 2s3-.6 4-2" stroke-linecap="round"/></svg>
+    </div>
+    <div class="abtn" id="flyBtn" title="Fly (F)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 4c-2 3.5-5 5-8 5.5 3 .5 5.5 2 8 6.5 2.5-4.5 5-6 8-6.5-3-.5-6-2-8-5.5Z" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="abtn jump" id="jumpBtn" title="Jump (Space)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20V5M12 5l-6 6M12 5l6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <!-- ── Settings button (bottom-left desktop / bottom-right mobile) ── -->
+  <div id="setbtn"><button class="chip" id="openSet">⚙ Settings</button></div>
+
+  <!-- ── Chat bar ── -->
+  <div id="chatbar">
+    <input id="chatInput" type="text" maxlength="30" autocomplete="off" placeholder="Say something…" aria-label="Chat message">
+    <span class="send-hint">Enter to send · Esc to close</span>
+  </div>
+
+  <!-- ── Emote wheel ── -->
+  <div id="wheel">
+    <div class="ring" id="wheelRing">
+      <div class="hub">emote</div>
+    </div>
+  </div>
+
+  <!-- ── Settings modal ── -->
+  <div id="settings">
+    <div class="card">
+      <button class="close" id="closeSet">×</button>
+      <h2>settings</h2>
+      <div class="sub">Pick your color</div>
+      <div id="swatches"></div>
+      <div class="sub">You are in room</div>
+      <div class="room" id="roomCode">——</div>
+      <div class="sub">Username</div>
+      <input id="usernameInput" type="text" maxlength="20" placeholder="Enter username…" class="name-input">
+    </div>
+  </div>
+
+  <!-- ── Loading screen ── -->
+  <div id="load">
+    <div class="k">Streaming overworld</div>
+    <div class="bar"><i></i></div>
+    <div id="loadMsg" class="load-msg">Initializing engine…</div>
+  </div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "tracks": [
+    { "startTime":   0, "endTime":  60, "name": "warmup"   },
+    { "startTime":  60, "endTime": 180, "name": "act 1"    },
+    { "startTime": 180, "endTime": 300, "name": "the drop" },
+    { "startTime": 300, "endTime": 420, "name": "encore"   }
+  ],
+  "events": [
+    { "t":   5, "type": "ENVIRONMENT_CHANGE",  "mood": 0.0  },
+    { "t":  30, "type": "LIGHTING_PULSE",       "intensity": 1.2 },
+    { "t":  58, "type": "SCENE_TRANSITION",     "scene": "stage" },
+    { "t":  60, "type": "ENVIRONMENT_CHANGE",  "mood": 0.4  },
+    { "t":  90, "type": "SPAWN_VFX",            "vfx": "confetti" },
+    { "t": 120, "type": "LIGHTING_PULSE",       "intensity": 1.6 },
+    { "t": 178, "type": "SCENE_TRANSITION",     "scene": "drop"  },
+    { "t": 180, "type": "ENVIRONMENT_CHANGE",  "mood": 0.85 },
+    { "t": 185, "type": "SPAWN_VFX",            "vfx": "burst" },
+    { "t": 300, "type": "ENVIRONMENT_CHANGE",  "mood": 0.0  },
+    { "t": 302, "type": "PLAY_VIDEO_OVERLAY",   "src": "encore.mp4" }
+  ]
+}

@@ -1,0 +1,37 @@
+
+  ╔═══════════════════════════════════════════════╗
+  ║            HEADROOM WRAP: CLAUDE              ║
+  ╚═══════════════════════════════════════════════╝
+
+  Starting Headroom proxy on port 8788...
+  Logs: C:\Users\admin\.headroom\logs\proxy.log
+  Proxy ready on http://127.0.0.1:8788
+
+  Launching Claude Code (API routed through Headroom)...
+  ANTHROPIC_BASE_URL=http://127.0.0.1:8788
+  Extra args: --model claude-fable-5 --dangerously-skip-permissions -p
+  Telemetry:    ENABLED (anonymous aggregate stats) | Disable: HEADROOM_TELEMETRY=off or --no-telemetry
+
+Everything checks out. The fix is complete.
+
+## What was wrong and what changed
+
+`Animator._rot()` applied Euler deltas in **bone-local** space (`bone.quaternion.multiply(q)`). Because the detective rig has arbitrary Blender bone rolls (e.g. `pelvis_01` carries a ~98° X rest rotation, arms carry heavy roll), local +X was never "swing forward" — so walk, run, jump, and emotes all rotated limbs around wrong axes.
+
+The rigged path in `src/player/Animator.js` now works in **character space** with a collect → flush structure:
+
+1. **Constructor precompute** — after one `innerScene.updateWorldMatrix(true, true)`, each tracked bone stores `qParentRestRel = qRootWorld⁻¹ · qParentWorld` (parent rest orientation relative to the model root) plus its inverse and the existing rest quaternion. Root-relative means character turning (outer group yaw) can't skew the axes, and no world-space math runs per frame.
+2. **`_rot(key,x,y,z)` accumulates** per-bone Euler deltas in a reused map instead of touching quaternions — multiple calls on the same bone in one frame (e.g. `spine3` lean + breathing during walk) now compose correctly.
+3. **`_applyPose()` flush** at the end of the rigged update computes `bone.quaternion = (qParentRestRel⁻¹ · qEuler · qParentRestRel) · qRestLocal`, and restores plain rest quaternions for untouched bones (this replaces `_resetBones`).
+4. **Sign constants** `AXIS_SIGN_X/Y/Z` sit at the top of the file, applied centrally in the flush. I verified the default sign empirically by parsing the GLB's rest pose with a throwaway node script (deleted afterward): the chain `Sketchfab_model(−90°X) · fbx(+90°X) · metarig.001(X→−X, Y→+Z, Z→+Y)` puts the character at **+Y up, facing −Z** in model-root space (foot bones point −Z). With that facing, a raw `+x` rotation swings a down-pointing thigh toward the facing direction — so all signs default to `1`, no flip needed.
+5. **Debug aid** — the constructor emits one `console.debug` listing matched vs missing bone keys.
+
+Amplitudes, frequencies, emote definitions, the static-model path, and the `new Animator(innerScene, type, bones)` signature are all untouched — `avatar.js:140` is the only construction site (LocalPlayer/RemotePlayer go through `buildAvatar`/`animateAvatar`), so no call-site changes were needed.
+
+## Verification
+
+- **Modified files**: `src/player/Animator.js`, `UPGRADE_NOTES.md` (new section "Fix: character-space bone rotation" documenting the mechanism and the sign-flip constants).
+- **node --check**: `src/player/Animator.js` → OK (only JS file modified).
+- **Expected bone matches on this rig** (all 22 present, verified against the GLB node names through `_findBones`' rules): `root` (\_rootJoint), `pelvis` (pelvis_01), `spine1–4` (spine.001–.004), `neck` (neck_05), `head` (head_06), `shoulderL/R`, `armL/R` (upper_arm.L/R), `forearmL/R`, `handL/R`, `thighL/R`, `calfL/R` (shin.L/R), `footL/R`. The devtools debug line will confirm `22/22 matched` at runtime.
+
+Not deployed; `server/`, firebase config, and the static path were not touched. If playtesting ever shows the legs mirrored, flip `AXIS_SIGN_X` to `-1` at the top of `Animator.js`.

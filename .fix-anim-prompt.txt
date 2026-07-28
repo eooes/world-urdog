@@ -1,0 +1,26 @@
+You are fixing skeletal animation in the SHIN SEKAI web game at C:\Users\admin\Desktop\game_concert\game. Plain-JS ES modules, three@0.168.0 via CDN importmap, NO build step. Only ONE rigged model exists: low_poly_detective.glb (45 bones, Blender-style names: pelvis_01, spine.001_00, spine.002_02, neck_05, head_06, shoulder.L_07, upper_arm.L_08, forearm.L_09, plus leg/hand/foot bones — defensive substring matching already exists in src/player/ModelLoader.js::_findBones).
+
+BUG REPORT FROM USER: when the detective walks, limbs do NOT swing the way they should, and emotes look wrong too.
+
+ROOT CAUSE (already diagnosed, do not re-litigate): src/player/Animator.js::_rot() applies `bone.quaternion.multiply(q)` with Euler angles in BONE-LOCAL space. This rig has arbitrary Blender bone rolls, so local +X is not "swing forward". All rigged walk/run/jump/emote poses rotate bones around wrong axes.
+
+REQUIRED FIX — character-space rotation with rest-pose precompute:
+1. In the Animator constructor (rigged path), additionally precompute for EACH tracked bone:
+   - qRestLocal (already stored as _restQ)
+   - qParentRestRel: the bone parent's world quaternion RELATIVE to the model root (innerScene), at rest pose. Compute by: innerScene.updateWorldMatrix(true,true) once, then for each bone: qParentWorld = bone.parent.getWorldQuaternion(), qRootWorld = innerScene.getWorldQuaternion(), qParentRestRel = qRootWorld.invert() * qParentWorld. Store per bone key.
+2. Replace _rot(key,x,y,z) so the Euler delta (x,y,z,'XYZ') is interpreted in CHARACTER space (x = pitch forward/back swing, y = yaw/twist, z = roll sideways) and applied on top of the REST local quaternion:
+     qDeltaLocal = qParentRestRel^-1 * qEuler * qParentRestRel
+     bone.quaternion = qDeltaLocal * qRestLocal(bone)
+   NOTE: _resetBones() already restores rest quaternions every frame before poses are applied, so each _rot call composes relative to rest. If multiple _rot calls target the SAME bone in one frame (check walk code: e.g. spine2 gets lean then breathing), they must ACCUMULATE, not overwrite. Simplest correct approach: accumulate per-bone Euler deltas in a map during the frame (add x,y,z), then in a flush step at the end of update() compute each bone's final quaternion = qDeltaLocal(accumulated) * qRestLocal. Restructure update() accordingly (collect → flush).
+3. Because qParentRestRel is relative to the model root, character turning (outer group yaw) does not skew the animation axes. Do NOT use world-space quats per frame.
+4. Keep ALL existing amplitudes, frequencies, emote definitions and the static-model path untouched. Only the rigged rotation mechanism changes.
+5. Sign sanity: thigh swing forward = +x pitch should move the leg toward the character's facing direction. If after the change the legs swing BACKWARD relative to facing, flip the sign of the x component once, centrally, in the flush step — and leave a clearly-marked constant at the top of the file (AXIS_SIGN_X etc.) for future tweaks.
+
+ALSO ADD a one-time console.debug in the constructor listing which bone keys were found vs expected (root, pelvis, spine1-4, neck, head, shoulderL/R, armL/R, forearmL/R, handL/R, thighL/R, calfL/R, footL/R) so missing matches are visible in devtools.
+
+VERIFY before finishing:
+1. `node --check` every file you modified.
+2. Read src/player/LocalPlayer.js and src/player/RemotePlayer.js to confirm how Animator is constructed (arguments order) — do not break the call sites; if you change the constructor signature, update call sites.
+3. Append a short section to UPGRADE_NOTES.md describing the new rotation mechanism and the sign-flip constants.
+
+Do NOT deploy. Do NOT touch server/, firebase.json, .firebaserc, or the static-model animation path. Do NOT run the room server. When done, print: modified files list, node --check results, and the bone keys you expect to match on this rig.

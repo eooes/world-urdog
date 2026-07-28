@@ -1,0 +1,40 @@
+You are upgrading the SHIN SEKAI web game in THIS directory (C:\Users\admin\Desktop\game_concert\game). It is a plain-JS ES-module three.js game (NO build step, three@0.168.0 via CDN importmap in index.html, `three/addons/` mapped too). Multiplayer via ws room server in server/. Do NOT touch server/, do NOT add build tooling, do NOT add npm dependencies for the client (load everything via the importmap). Read the existing code first (src/player/avatar.js, src/player/LocalPlayer.js, src/player/NpcCrowd.js, src/player/RemotePlayer.js, src/environment.js, src/terrain.js, src/engine/scene.js, src/engine/renderer.js, src/constants.js, src/main.js) and integrate cleanly with the existing architecture, emote system (8 emotes, E key), and nameplate/chat systems. Keep everything working offline (NPC crowd mode).
+
+GOAL 1 — REAL 3D CHARACTERS (replace current procedural angel avatar):
+Three GLB models now exist in ./assets/models/ :
+- dalikan_dd_paladin.glb — STATIC single mesh, no skeleton (295KB)
+- low_poly_detective.glb — RIGGED, 45 joints, NO animation clips (185KB). Bone names look like: _rootJoint, pelvis_01, spine.001_00, spine.002_02, spine.003_03, spine.004_04, neck_05, head_06, shoulder.L_07, upper_arm.L_08, forearm.L_09, etc. (use defensive substring matching: thigh|upleg, calf|shin|lowerleg, foot, hand, upper_arm|upperarm, forearm|lowerarm, shoulder|clavicle, spine, pelvis|hips, neck, head; also .L/.R or _L/_R variants)
+- medieval_woman_low-poly.glb — STATIC single mesh, no skeleton (146KB)
+
+Requirements:
+- Load with GLTFLoader (three/addons). Player avatar AND every NPC AND remote players each get a RANDOM one of the 3 models (persist per session; remote peers should broadcast their model index in the join/state if a field exists or add one cleanly).
+- Normalize scale/orientation per model so all are ~1.8m tall, feet on ground, facing forward (measure bounding box at load, wrap in a Group).
+- ANIMATION:
+  - Detective (rigged): procedural skeletal animation in code — an Animator that each frame writes bone rotations: idle breathing, walk cycle (opposite-phase thigh swings ~±25-30°, calf follow-through, arm swing opposite to legs, pelvis bob), run cycle (bigger amplitude/lean), jump (anticipation crouch → tuck → land absorb), and all 8 existing emotes as authored bone-pose mini-clips (e.g. wave, dance, bow, cheer, point, sit, spin, clap — map to whatever the existing 8 emotes are). Blend smoothly between states.
+  - Static models (paladin, woman): stylized squash-and-stretch locomotion on the wrapper Group — idle sway/bob, walk bob with forward lean + slight roll, run with more lean + bigger bob, jump = crouch-squash → stretch up → land squash, emotes = whole-body authored motions (spin, hop-flip, bow tilt, happy hops, wave-lean...). Make it look intentional and charming (Crossy-Road-like), NOT broken.
+- CAPE PHYSICS: implement a small verlet-cloth simulator (own module, e.g. src/player/CapeCloth.js): ~10x14 particle grid, 2-3 relaxation iterations, gravity + wind force, pinned top edge. Attach a cloth cape to the PALADIN at two shoulder anchor points (positioned from the model's bounding box, hanging down the back), colored/tinted to match its texture (sample dominant color or use a fitting dark red). The cape must react to character movement, jumping, and the global wind (same wind as grass below). Detective's coat should sway via its procedural bone animation. Keep it cheap: one cape for local player + NPCs with paladin model (cap total active cloths at ~12, closest ones).
+
+GOAL 2 — REALISTIC GROUND + GRASS WITH WIND:
+- Add instanced grass: ONE InstancedMesh (or two crossed-quad instanced meshes) of a few thousand grass blades/tufts scattered on walkable ground areas (respect existing terrain/paths — don't plant grass on the stage or plaza floor; sample existing ground/walkability logic if present, else simple masks by position). Custom ShaderMaterial (or onBeforeCompile) vertex sway: bend by height, global wind direction uniform, gusts via cheap noise (sin combos), subtle per-instance phase from instance id/position. Also add a wind-direction tint/brightness shimmer so you can SEE wind direction across the field. One draw call. ~0 extra CPU per frame (all vertex shader + one uniform update).
+- Improve ground realism cheaply: procedurally generated CanvasTexture ground (grass-green base with noise mottling, dirt patches, subtle path darkening) instead of flat color; slight color grading toward the existing Nocturne palette. Optional: a few dozen billboard flowers/pebbles using the same instancing trick.
+- Expose a single global wind vector (direction + strength, slowly gusting over time) in a shared module so grass, cape, and fog drift all agree.
+
+GOAL 3 — FOG + FAKE LIGHTING (cheap tricks, this is the "make it look AAA for free" pass):
+- THREE.FogExp2 on the scene, density tuned so the stage glows through haze from spawn; fog color matched to sky horizon color. Slight animated fog-color drift is ok if nearly free.
+- Fake god-rays / light shafts: a handful of tall, camera-facing cylindrical/cone billboards with additive-blended vertical gradient texture (CanvasTexture), placed at the stage lights and a few lamp posts; opacity modulated by audio beat if the AudioTimeline exposes intensity, else slow pulse. Zero shadowmaps needed.
+- Lamp/glow sprites: additive radial-gradient sprites on existing light sources/lanterns/stage fixtures.
+- Lighting rig: hemisphere light (sky/ground colors from palette) + ONE directional key light with a SMALL shadow camera box (e.g. 30m) that follows the local player (snap to texel to avoid shimmer) — everything outside the box relies on hemisphere+emissive, standard cheap trick. Characters get simple blob shadows (dark radial-gradient circle decal under each character) so they stay grounded when outside the shadow box.
+- Keep bloom pass if it exists; make sure new additive elements don't blow out.
+
+CONSTRAINTS:
+- Must stay 60fps on a mid phone: instancing only, no per-frame geometry rebuilds except the cloths (small), no new shadow-casting lights beyond the one directional, cap grass instances (~3000-6000 with LOD by distance if easy).
+- ES modules, plain JS, no TypeScript, no bundler. Use the existing importmap (three, three/addons).
+- Do not break: multiplayer sync, chat, emote wheel UI, audio timeline, camera system, mobile controls.
+- If a assets/models GLB fails to load, gracefully fall back to the current procedural avatar.
+
+VERIFY before finishing:
+1. `node --check` EVERY js file you created/modified.
+2. Start `npx serve . -p 8080` briefly (or reuse a running one) and curl index + each new module + each GLB URL to confirm 200 (remember GLB paths in fetch/loader are relative to index.html).
+3. Write a short UPGRADE_NOTES.md: what changed per file, how wind/fog/cape tunables are exposed, any known limitations.
+
+When done, print: files created/modified list, node --check results, and the curl status results. Do NOT deploy anything (I deploy myself). Do NOT run the room server. Do NOT modify firebase.json or .firebaserc.
