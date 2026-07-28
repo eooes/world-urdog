@@ -108,6 +108,7 @@ async function main() {
   const countdown  = buildCountdown(scene);
   const motes      = buildMotes(scene);
   const { blob, basePositions, material: blobMat } = buildDarkBlob(scene);
+  blob.visible = false;  // hide — suspected black box culprit
 
   /* ── Grass (MdsGzS exact shader) + atmospheric FX ── */
   const grassField = buildGrassField(scene);
