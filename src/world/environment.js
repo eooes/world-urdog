@@ -127,22 +127,33 @@ export function buildCountdown(scene) {
   ctx.fillText('999', 256, 128);
   const tex = new THREE.CanvasTexture(cv);
 
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: tex, transparent: true, depthWrite: false, opacity: 0.85, fog: false,
-  }));
-  sprite.scale.set(18, 9, 1);
-  sprite.position.set(0, 80, -80);
-  scene.add(sprite);
+  const mat = new THREE.SpriteMaterial({
+    map: tex, transparent: true, depthWrite: false, opacity: 0.9, fog: false,
+  });
+
+  // 3 copies scattered like old sky numbers, always visible (fog:false)
+  const positions = [
+    { x: -70, y: 42, z: -95 },
+    { x: 0,   y: 55, z: -85 },
+    { x: 70,  y: 38, z: -90 },
+  ];
+  const sprites = positions.map(p => {
+    const sprite = new THREE.Sprite(mat.clone());
+    sprite.scale.set(24, 12, 1);
+    sprite.position.set(p.x, p.y, p.z);
+    scene.add(sprite);
+    return sprite;
+  });
 
   return {
-    sprite,
+    sprites,
     canvas: cv,
     ctx,
     tex,
     value: 999,
     redMode: false,
     redTimer: 0,
-    accum: 0,          // seconds accumulator
+    accum: 0,
     setText(n) {
       const s = String(Math.max(0, Math.floor(n))).padStart(3, '0');
       ctx.clearRect(0, 0, 512, 256);

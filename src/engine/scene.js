@@ -3,8 +3,8 @@ import { WORLD } from '../constants.js';
 
 export function buildScene() {
   const scene = new THREE.Scene();
-  // Night-sky horizon haze; denser than before so the stage glows through the fog
-  scene.fog = new THREE.FogExp2(0x1a1a3a, 0.0062);
+  // Exponential fog — things beyond ~150 units fade to haze
+  scene.fog = new THREE.FogExp2(0x1a1a3a, 0.0001);
   return scene;
 }
 

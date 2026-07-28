@@ -324,14 +324,16 @@ async function main() {
     /* -- Countdown timer (999 → 0, red sky at 0, loop) -- */
     if (countdown.redMode) {
       countdown.redTimer -= dt;
-      countdown.sprite.position.y = 80 + Math.sin(t * 3) * 3; // shake during red alert
+      // Shake all sprites during red alert
+      countdown.sprites.forEach((sp, i) => {
+        sp.position.y = sp.userData?.baseY ?? sp.position.y + Math.sin(t * 3 + i) * 3;
+      });
       if (countdown.redTimer <= 0) {
-        // Red alert over — reset
         countdown.redMode = false;
         countdown.value = 999;
         countdown.accum = 0;
         countdown.setText(999);
-        sky.uniforms.tint.value = 0.95; // restore normal sky via update()
+        sky.uniforms.tint.value = 0.95;
       }
     } else {
       countdown.accum += dt;
@@ -341,7 +343,6 @@ async function main() {
         countdown.setText(countdown.value);
       }
       if (countdown.value <= 0) {
-        // Trigger red alert
         countdown.redMode = true;
         countdown.redTimer = 30;
         countdown.value = 0;
@@ -350,7 +351,15 @@ async function main() {
         sky.flashRed(30);
       }
       // Gentle bob during normal countdown
-      countdown.sprite.position.y = 80 + Math.sin(t * 0.5) * 1.5;
+      countdown.sprites.forEach((sp, i) => {
+        sp.position.y = (sp.userData?.baseY ?? sp.position.y) + Math.sin(t * 0.5 + i) * 1.5;
+      });
+    }
+
+    // Save base Y on first frame
+    if (!countdown._baseSaved) {
+      countdown.sprites.forEach(sp => { sp.userData = { baseY: sp.position.y }; });
+      countdown._baseSaved = true;
     }
 
     /* -- Blob deform -- */
