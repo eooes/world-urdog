@@ -27,6 +27,7 @@ export class AudioTimeline {
     this._startAt  = 0;
     this._clock    = 0;
     this.playing   = false;
+    this.muted     = false;
 
     // Callbacks — set these from outside
     this.onTrackChange  = null; // (track) =>
@@ -62,9 +63,14 @@ export class AudioTimeline {
       const res = await fetch(url);
       const buf = await res.arrayBuffer();
       const decoded = await this._ctx.decodeAudioData(buf);
+
+      this._gain = this._ctx.createGain();
+      this._gain.gain.value = 0.4; // moderate volume
+      this._gain.connect(this._ctx.destination);
+
       this._source = this._ctx.createBufferSource();
       this._source.buffer = decoded;
-      this._source.connect(this._ctx.destination);
+      this._source.connect(this._gain);
       this._source.loop = true;
       return true;
     } catch (_) {
@@ -87,6 +93,13 @@ export class AudioTimeline {
   stop() {
     this.playing = false;
     try { this._source?.stop(); } catch (_) {}
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this._gain) {
+      this._gain.gain.value = this.muted ? 0 : 0.4;
+    }
   }
 
   get clock() { return this._clock; }

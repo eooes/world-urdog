@@ -161,7 +161,34 @@ async function main() {
   /* ── Timeline / Audio ── */
   const timeline = new AudioTimeline();
   await timeline.loadTimeline('src/timeline/events.json');
-  timeline.play();
+
+  // Background music — load and play (user gesture required for autoplay)
+  const musicLoaded = await timeline.loadAudio('assets/music/Echoes in the Static.mp3');
+  if (musicLoaded) {
+    // Autoplay blocked until user gesture — start on first click/tap
+    const startMusic = () => {
+      timeline.play();
+      document.removeEventListener('click', startMusic);
+      document.removeEventListener('touchstart', startMusic);
+    };
+    document.addEventListener('click', startMusic);
+    document.addEventListener('touchstart', startMusic);
+  } else {
+    // Fallback: start timeline without audio
+    timeline.play();
+  }
+
+  // Music toggle button
+  const musicBtn = document.getElementById('musicBtn');
+  if (musicBtn) {
+    musicBtn.style.display = musicLoaded ? 'block' : 'none';
+    musicBtn.addEventListener('click', () => {
+      const muted = !timeline.muted;
+      timeline.toggleMute();
+      musicBtn.classList.toggle('on', !muted);
+      musicBtn.textContent = muted ? '🔇' : '🎵';
+    });
+  }
 
   /* ── Energy state ── */
   let curEnergy = 0.3;
