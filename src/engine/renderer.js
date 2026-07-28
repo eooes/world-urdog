@@ -30,11 +30,9 @@ export class Renderer {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(scene, camera));
 
-    // ── Bloom / glow ──────────────────────────────────────────────────────
     const res = new THREE.Vector2(innerWidth, innerHeight);
-    // ── Bloom / glow ──────────────────────────────────────────────────────
-    // Bloom: threshold=0.35 — crosses (green=1.0) bloom massively, everything else dark
-    this.bloomPass = new UnrealBloomPass(res, 1.0, 0.45, 0.35);
+    // Bloom: threshold=0.65 — only crosses (green=1.0, luminance≈0.715) bloom
+    this.bloomPass = new UnrealBloomPass(res, 0.5, 0.3, 0.65);
     this.composer.addPass(this.bloomPass);
 
     // ── Glitch (applied on top of bloom) ──────────────────────────────────

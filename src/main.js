@@ -87,13 +87,6 @@ async function main() {
   /* ── World ── */
   const sky     = new SkySystem(scene);
 
-  // ── Evangelion deep red sky (darker to let crosses pop) ──
-  sky.uniforms.top.value.set(0x050010);   // near-black purple
-  sky.uniforms.mid.value.set(0x0d0218);   // very dark crimson
-  sky.uniforms.bot.value.set(0x150520);   // dark horizon red
-  sky.uniforms.night.value.set(0x020008); // almost black
-  sky.uniforms.tint.value = 0.95;         // nearly full night
-
   const terrain = buildTerrain(scene);
   colliders.push(terrain);
 

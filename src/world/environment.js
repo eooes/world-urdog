@@ -129,7 +129,7 @@ export function buildSkyNumbers(scene) {
     ctx.shadowBlur = 8;
     ctx.fillText(time, 128, 52);
     const tex = new THREE.CanvasTexture(cv);
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.9 }));
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.3 }));
     sprite.scale.set(9, 3.4, 1);
     sprite.position.set(
       (Math.random() - 0.5) * 220,
@@ -170,7 +170,7 @@ export function buildMotes(scene) {
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    opacity: 0.8,
+    opacity: 0.25,
   });
   const pts = new THREE.Points(geo, mat);
   scene.add(pts);

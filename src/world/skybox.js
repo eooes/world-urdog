@@ -3,17 +3,17 @@ import * as THREE from 'three';
 export class SkySystem {
   constructor(scene) {
     this.uniforms = {
-      top:   { value: new THREE.Color(0x3d8ae6) },
-      mid:   { value: new THREE.Color(0x9fd2f7) },
-      bot:   { value: new THREE.Color(0xecf7fc) },
-      tint:  { value: 0.0 },
-      night: { value: new THREE.Color(0x0d1230) },
+      top:   { value: new THREE.Color(0x050010) },  // dark Evangelion night
+      mid:   { value: new THREE.Color(0x0d0218) },
+      bot:   { value: new THREE.Color(0x150520) },
+      tint:  { value: 0.95 },
+      night: { value: new THREE.Color(0x020008) },
       uTime: { value: 0.0 },
     };
 
     // Smooth transition state
-    this._currentTint = 0;
-    this._targetTint = 0;
+    this._currentTint = 0.95;
+    this._targetTint = 0.95;
     // Palette presets (top, mid, night)
     this._palettes = [
       { top: 0x3d8ae6, mid: 0x9fd2f7, night: 0x0d1230 },  // day
@@ -108,7 +108,7 @@ export class SkySystem {
     ctx.fillStyle = gr;
     ctx.fillRect(0, 0, 128, 128);
     const tex = new THREE.CanvasTexture(cv);
-    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.85, fog: false });
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.2, fog: true });
 
     const group = new THREE.Group();
     for (let i = 0; i < 6; i++) {
