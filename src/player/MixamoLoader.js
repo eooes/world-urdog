@@ -173,10 +173,10 @@ export function createMixamoAvatar() {
       obj.receiveShadow = true;
 
       const oldMat = obj.material;
-      obj.material = new THREE.MeshStandardMaterial({
+      obj.material = new THREE.MeshPhongMaterial({
         map: tex,
-        roughness: 0.5,
-        metalness: 0.0,
+        shininess: 10,
+        specular: 0x111111,
         skinning: true,
       });
       if (oldMat) oldMat.dispose();

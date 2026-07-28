@@ -3,7 +3,6 @@ import { EffectComposer }  from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass }      from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass }      from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { SAOPass }         from 'three/addons/postprocessing/SAOPass.js';
 import { GLITCH_VERT, GLITCH_FRAG } from '../shaders/toon.js';
 
 export class Renderer {
@@ -33,16 +32,7 @@ export class Renderer {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(scene, camera));
 
-    // ── SSAO (ambient occlusion for depth) ──────────────────────────
-    this.saoPass = new SAOPass(scene, camera, false, true);
-    this.saoPass.params.saoScale = 0.5;
-    this.saoPass.params.saoKernelRadius = 30;
-    this.saoPass.params.saoIntensity = 0.03;
-    this.saoPass.params.saoBias = 0.5;
-    this.saoPass.params.saoBlur = true;
-    this.saoPass.params.saoBlurRadius = 4;
-    this.saoPass.params.saoBlurStdDev = 1.5;
-    this.composer.addPass(this.saoPass);
+    // SSAO disabled — SAOPass conflicts with custom shaders in this scene
 
     const res = new THREE.Vector2(innerWidth, innerHeight);
     // Bloom: threshold=0.65 — only crosses (green=1.0, luminance≈0.715) bloom

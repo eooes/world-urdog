@@ -58,6 +58,12 @@ export function buildBigScreen(scene) {
   const sc = document.createElement('canvas');
   sc.width = 1024; sc.height = 576;
   const ctx = sc.getContext('2d');
+  // Fill with initial gradient so it's not black before first draw
+  const initGr = ctx.createLinearGradient(0, 0, 1024, 576);
+  initGr.addColorStop(0, 'hsl(270,80%,25%)');
+  initGr.addColorStop(1, 'hsl(150,75%,18%)');
+  ctx.fillStyle = initGr;
+  ctx.fillRect(0, 0, 1024, 576);
   const tex = new THREE.CanvasTexture(sc);
 
   const mesh = new THREE.Mesh(
