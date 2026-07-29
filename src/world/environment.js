@@ -130,7 +130,7 @@ export function buildCountdown(scene) {
   ctx.textBaseline = 'middle';
   ctx.shadowColor = 'rgba(231,200,106,0.7)';
   ctx.shadowBlur = 20;
-  ctx.fillText('999', 256, 128);
+  ctx.fillText('100', 256, 128);
   const tex = new THREE.CanvasTexture(cv);
 
   const mat = new THREE.SpriteMaterial({
@@ -156,10 +156,10 @@ export function buildCountdown(scene) {
     canvas: cv,
     ctx,
     tex,
-    value: 999,
+    value: 100,
     redMode: false,
     redTimer: 0,
-    accum: 0,
+    accum: 0,          // seconds accumulator
     setText(n) {
       const s = String(Math.max(0, Math.floor(n))).padStart(3, '0');
       ctx.clearRect(0, 0, 512, 256);

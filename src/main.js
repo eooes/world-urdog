@@ -332,9 +332,9 @@ async function main() {
       });
       if (countdown.redTimer <= 0) {
         countdown.redMode = false;
-        countdown.value = 999;
+        countdown.value = 100;
         countdown.accum = 0;
-        countdown.setText(999);
+        countdown.setText(100);
         sky.uniforms.tint.value = 0.95;
       }
     } else {
