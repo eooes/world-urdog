@@ -210,7 +210,7 @@ async function main() {
   /* ── UI ── */
   const hud      = new HUD();
   const emoteWhl = new EmoteWheel();
-  const settings = new SettingsPanel();
+  const settings = new SettingsPanel(net);
   const sysPan   = new SystemsPanel();
   const chatBar  = new ChatBar(scene, crowd);
 
@@ -247,6 +247,19 @@ async function main() {
   net.addEventListener('welcome', e => {
     hud.update(0, rendererSys.info, NET.TICK_HZ, crowd.count + 1,
       '00:00', '— warmup —', e.detail.roomId);
+    settings.setRoomInfo(e.detail.roomCode || e.detail.roomId, e.detail.count, e.detail.max);
+  });
+
+  net.addEventListener('roomUpdate', e => {
+    settings.setRoomInfo(e.detail.roomCode, e.detail.count, e.detail.max);
+  });
+
+  net.addEventListener('roomList', e => {
+    settings.setRoomList(e.detail.rooms);
+  });
+
+  net.addEventListener('roomSwitched', e => {
+    settings.setRoomInfo(e.detail.roomCode, e.detail.count, e.detail.max);
   });
   net.connect(username, localPlayer.color);
 
