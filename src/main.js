@@ -207,6 +207,13 @@ async function main() {
     }
   };
 
+  /* ── Network (create first so UI can reference it) ── */
+  const net    = new RoomClient();
+  let username = 'guest';
+  let netTick  = 0;
+  const NET_INTERVAL  = 1000 / NET.TICK_HZ;
+  let lastNetTick = 0;
+
   /* ── UI ── */
   const hud      = new HUD();
   const emoteWhl = new EmoteWheel();
@@ -236,13 +243,6 @@ async function main() {
     emoteWhl.close();
     settings.close();
   };
-
-  /* ── Network ── */
-  const net    = new RoomClient();
-  let username = settings.username || 'guest';
-  let netTick  = 0;
-  const NET_INTERVAL  = 1000 / NET.TICK_HZ;
-  let lastNetTick = 0;
 
   net.addEventListener('welcome', e => {
     hud.update(0, rendererSys.info, NET.TICK_HZ, crowd.count + 1,
