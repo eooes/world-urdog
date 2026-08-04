@@ -250,7 +250,7 @@ async function main() {
   const emoteWhl = new EmoteWheel();
   const settings = new SettingsPanel(net);
   const sysPan   = new SystemsPanel();
-  const chatBar  = new ChatBar(scene, crowd);
+  const chatBar  = new ChatBar(scene, crowd, net);
 
   /* ── Emote button ── */
   document.getElementById('emoteBtn').addEventListener('click', () => emoteWhl.toggle());
@@ -262,7 +262,10 @@ async function main() {
 
   /* ── Settings callbacks ── */
   settings.onColorChange    = hex  => { localPlayer.setColor(hex); };
-  settings.onUsernameChange = name => { username = name; };
+  settings.onUsernameChange = name => {
+    username = name;
+    localPlayer.setUsername(name);
+  };
 
   /* ── Chat ── */
   kb.onChat = action => {
@@ -316,6 +319,14 @@ async function main() {
 
   net.addEventListener('leave', e => {
     removeNetPlayer(e.detail.playerId);
+  });
+
+  /* ── Incoming chat from other players ── */
+  net.addEventListener('chat', e => {
+    const { playerId, text } = e.detail;
+    if (!playerId || playerId === net.playerId || !text) return;
+    const rp = netPlayers.get(playerId);
+    if (rp) rp.showChat(text, rp._color);
   });
 
   net.addEventListener('roomUpdate', e => {

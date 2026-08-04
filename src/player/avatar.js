@@ -115,9 +115,50 @@ function buildProceduralAvatar(accentHex) {
 // ── Public API ───────────────────────────────────────────────────────────────
 
 /**
+ * Build a world-space nameplate sprite (shared by local & remote players).
+ */
+export function buildNameplate(text, sub) {
+  const cv = document.createElement('canvas');
+  cv.width = 512; cv.height = 140;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, 512, 140);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#666666';  // lum ~0.40 — safely below any bloom threshold
+  ctx.font = '600 46px Inter, sans-serif';
+  ctx.shadowColor = 'rgba(0,0,0,0.7)';
+  ctx.shadowBlur  = 6;
+  ctx.fillText(text, 256, 54);
+  if (sub) {
+    ctx.font = '400 30px Inter, sans-serif';
+    ctx.fillStyle = 'rgba(130,130,140,0.65)';  // below bloom threshold
+    ctx.fillText(sub, 256, 100);
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  const sp  = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false }),
+  );
+  sp.scale.set(4.2, 1.15, 1);
+  sp.center.set(0.5, 0);
+  return sp;
+}
+
+/**
+ * Apply / update the accent colour on a Mixamo avatar body (tints the pattern
+ * texture via material.color). Falls back to the hem disc on procedural avatars.
+ */
+export function setAvatarColor(avatar, hex) {
+  const ud = avatar.userData;
+  if (ud?.bodyMats?.length) {
+    for (const m of ud.bodyMats) m.color.setHex(hex);
+    return;
+  }
+  if (ud?.hem) ud.hem.material.color.setHex(hex);
+}
+
+/**
  * Build a character avatar.
  *
- * @param {number} colorHex   Accent colour for procedural fallback / nameplate tint.
+ * @param {number} colorHex   Accent colour for body tint / procedural fallback / nameplate tint.
  * @param {number} modelIndex 0 = paladin, 1 = detective, 2 = woman, -1 = random.
  * @returns {THREE.Group}
  */
@@ -127,7 +168,7 @@ export function buildAvatar(colorHex, modelIndex) {
     ? modelIndex
     : Math.floor(Math.random() * MODEL_COUNT);
 
-  const inst = instantiateModel(idx);
+  const inst = instantiateModel(idx, colorHex);
 
   if (!inst) {
     // GLB failed to load → use procedural angel
@@ -157,6 +198,7 @@ export function buildAvatar(colorHex, modelIndex) {
     halo:  null,
     wings: null,
     innerScene,
+    bodyMats: inst.bodyMats ?? null,
     // Mixamo clip transition state
     _currentClip:   null,
     _currentClipKey: null,

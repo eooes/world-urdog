@@ -111,7 +111,7 @@ wss.on('connection', ws => {
   // Default player state (filled in on 'join')
   let playerState = {
     playerId,
-    username: 'guest_' + playerId.slice(0, 4),
+    username: 'guest',
     transform: { position: { x: 0, y: 0, z: 0 }, rotationY: 0 },
     state: { animState: 'IDLE', activeEmoteId: null, color: 0x9184d9 },
   };

@@ -153,7 +153,7 @@ export async function initMixamo() {
 }
 
 /* ── Create character instance ────────────────────────────────────────── */
-export function createMixamoAvatar() {
+export function createMixamoAvatar(colorHex) {
   if (!_baseFbx) return null;
 
   const inner = cloneSkeleton(_baseFbx);
@@ -167,6 +167,7 @@ export function createMixamoAvatar() {
   // Random pattern per character
   const tex = _randomCharTexture();
 
+  const bodyMats = [];
   inner.traverse(obj => {
     if (obj.isMesh) {
       obj.castShadow    = true;
@@ -179,18 +180,24 @@ export function createMixamoAvatar() {
         obj.material.dispose();
       }
 
-      obj.material = new THREE.MeshBasicMaterial({
+      const mat = new THREE.MeshBasicMaterial({
         map: tex,
         // NOTE: three r168 detects skinning automatically via object.isSkinnedMesh.
         // Do NOT pass `skinning: true` here — it's no longer a material property.
       });
+      // Tint the pattern with the player's chosen colour
+      if (colorHex !== undefined) mat.color.setHex(colorHex);
+      obj.material = mat;
+      bodyMats.push(mat);
     }
   });
   const group = new THREE.Group();
   group.add(inner);
   const mixer = new THREE.AnimationMixer(inner);
 
-  return { group, inner, mixer };
+  group.userData.bodyMats = bodyMats;
+
+  return { group, inner, mixer, bodyMats };
 }
 
 /* ── Get animation clip ──────────────────────────────────────────────── */

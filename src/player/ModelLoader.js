@@ -27,9 +27,9 @@ export async function loadAllModels() {
  *  - hasCape    : boolean
  *  - bones      : bone map (non-null for 'rigged')
  */
-export function instantiateModel(index) {
+export function instantiateModel(index, colorHex) {
   // Only Mixamo model available
-  const result = createMixamoAvatar();
+  const result = createMixamoAvatar(colorHex);
   if (!result) return null;
   return {
     group:      result.group,
@@ -39,5 +39,6 @@ export function instantiateModel(index) {
     hasCape:    false,
     bones:      null,
     mixer:      result.mixer,
+    bodyMats:   result.bodyMats,
   };
 }

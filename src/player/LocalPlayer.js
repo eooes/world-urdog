@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { buildAvatar, animateAvatar } from './avatar.js';
+import { buildAvatar, animateAvatar, buildNameplate, setAvatarColor } from './avatar.js';
 import { terrainHeight } from '../world/terrain.js';
 import { PHYSICS, ANIM_STATE, PLAYER_COLORS } from '../constants.js';
 import { wind } from '../world/wind.js';
@@ -11,9 +11,16 @@ export class LocalPlayer {
     this.colorIndex  = 7;
     this.color       = PLAYER_COLORS[this.colorIndex].hex;
     this.modelIndex  = 0;   // Mixamo — the only character model
+    this.username    = 'guest';
 
     this.avatar = buildAvatar(this.color, this.modelIndex);
     this.avatar.position.set(0, terrainHeight(0, 0), 0);
+
+    // Nameplate above the head
+    this.nameplate = buildNameplate(this.username, 'you');
+    this.nameplate.position.y = 2.5;
+    this.avatar.add(this.nameplate);
+
     scene.add(this.avatar);
 
     // Cape — cloth physics (disabled temporarily)
@@ -65,10 +72,20 @@ export class LocalPlayer {
 
   setColor(hex) {
     this.color = hex;
-    // Only applies to procedural fallback avatar
-    if (this.avatar.userData.hem) {
-      this.avatar.userData.hem.material.color.setHex(hex);
+    setAvatarColor(this.avatar, hex);
+  }
+
+  setUsername(name) {
+    this.username = name;
+    // Rebuild nameplate
+    if (this.nameplate) {
+      this.avatar.remove(this.nameplate);
+      this.nameplate.material.map?.dispose();
+      this.nameplate.material.dispose();
     }
+    this.nameplate = buildNameplate(name, 'you');
+    this.nameplate.position.y = 2.5;
+    this.avatar.add(this.nameplate);
   }
 
   update(dt, inputVec, camYaw, energy, t) {

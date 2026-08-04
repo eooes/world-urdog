@@ -30,9 +30,10 @@ function buildBubble(text, colorHex) {
 }
 
 export class ChatBar {
-  constructor(scene, npcs) {
+  constructor(scene, npcs, net) {
     this._scene    = scene;
     this._npcs     = npcs; // NpcCrowd instance
+    this._net      = net ?? null; // RoomClient — send chat over the network
     this._barEl    = document.getElementById('chatbar');
     this._inputEl  = document.getElementById('chatInput');
     this._btnEl    = document.getElementById('chatBtn');
@@ -62,12 +63,17 @@ export class ChatBar {
     if (txt) {
       this.spawnBubble(playerAvatar, txt, colorHex);
 
-      // Simulated NPC reply
-      const npcs = this._npcs?.npcs;
-      if (npcs?.length) {
-        const n = npcs[(Math.random() * npcs.length) | 0];
-        const reply = CHAT_REPLIES[(Math.random() * CHAT_REPLIES.length) | 0];
-        setTimeout(() => this.spawnBubble(n.player.avatar, reply, 0xffffff), 700 + Math.random() * 900);
+      // Send over the network so other players see it
+      if (this._net?.online) {
+        this._net.sendChat(txt);
+      } else {
+        // Offline — simulated NPC reply
+        const npcs = this._npcs?.npcs;
+        if (npcs?.length) {
+          const n = npcs[(Math.random() * npcs.length) | 0];
+          const reply = CHAT_REPLIES[(Math.random() * CHAT_REPLIES.length) | 0];
+          setTimeout(() => this.spawnBubble(n.player.avatar, reply, 0xffffff), 700 + Math.random() * 900);
+        }
       }
     }
     this.close();
