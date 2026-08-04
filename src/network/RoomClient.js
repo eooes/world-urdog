@@ -44,12 +44,18 @@ export class RoomClient extends EventTarget {
   connect(username, colorHex) {
     this._username = username || 'guest';
     this._colorHex = colorHex !== undefined ? colorHex : 0x9184d9;
+    this._shouldReconnect = true;
+    this._reconnectDelay = 2000; // ms, doubles on repeated failure
+    this._open();
+  }
 
+  _open() {
     try {
       const ws = new WebSocket(NET.WS_URL);
+      this._ws = ws;
       ws.onopen = () => {
         this.online = true;
-        this._ws = ws;
+        this._reconnectDelay = 2000;
         // Send initial join with credentials
         ws.send(JSON.stringify({
           type: 'join',
@@ -57,18 +63,38 @@ export class RoomClient extends EventTarget {
           color: this._colorHex,
         }));
         this._emit('connected', {});
+        // Rejoin previous room (if we had one and it still exists)
+        if (this.roomCode && this._rejoining) {
+          this._rejoining = false;
+          ws.send(JSON.stringify({ type: 'joinRoom', code: this.roomCode }));
+        }
       };
       ws.onmessage = e => {
         try { this._handleMessage(JSON.parse(e.data)); } catch (_) {}
       };
-      ws.onerror = ws.onclose = () => {
-        if (!this.online) this._startMockMode();
-        else              this._emit('disconnected', {});
+      ws.onerror = () => {};
+      ws.onclose = () => {
+        const wasOnline = this.online;
         this.online = false;
+        this._ws = null;
+        if (wasOnline) this._emit('disconnected', {});
+        if (this._shouldReconnect) this._scheduleReconnect();
       };
     } catch (_) {
-      this._startMockMode();
+      if (this._shouldReconnect) this._scheduleReconnect();
+      else this._startMockMode();
     }
+  }
+
+  _scheduleReconnect() {
+    clearTimeout(this._reconnectTimer);
+    this._rejoining = true; // remember room to rejoin
+    this._reconnectTimer = setTimeout(() => {
+      if (!this._shouldReconnect) return;
+      this._open();
+    }, this._reconnectDelay);
+    // Back off up to 30s so we don't hammer a dead server
+    this._reconnectDelay = Math.min(this._reconnectDelay * 2, 30000);
   }
 
   sendState(playerState) {
@@ -120,8 +146,12 @@ export class RoomClient extends EventTarget {
   }
 
   disconnect() {
+    this._shouldReconnect = false;
+    clearTimeout(this._reconnectTimer);
     clearInterval(this._tickTimer);
     this._ws?.close();
+    this._ws = null;
+    this.online = false;
   }
 
   // ── Internal ────────────────────────────────────────────────────

@@ -56,18 +56,18 @@ export const NET = Object.freeze({
   TICK_HZ: 25,
   LERP_ALPHA: 0.18,
   // Local dev uses the room server on localhost:3030.
-  // In production, allow override via ?ws=wss://host:port and otherwise
-  // try wss on the same origin; RoomClient falls back to offline NPC crowd.
+  // Production: Cloud Run public WebSocket endpoint (deployed via gcloud).
+  // Override anytime with ?ws=wss://host
   WS_URL: (() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const override = params.get('ws');
       if (override) return override;
-      const { hostname, protocol } = window.location;
+      const { hostname } = window.location;
       if (hostname === 'localhost' || hostname === '127.0.0.1') return 'ws://localhost:3030';
-      return (protocol === 'https:' ? 'wss://' : 'ws://') + hostname + ':3030';
+      return 'wss://shin-sekai-ws-442096718896.asia-southeast1.run.app';
     } catch (e) {
-      return 'ws://localhost:3030';
+      return 'wss://shin-sekai-ws-442096718896.asia-southeast1.run.app';
     }
   })(),
 });
