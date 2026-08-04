@@ -1,0 +1,12 @@
+{
+  "name": "shin-sekai-ws-functions",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SHIN SEKAI WebSocket room server as Firebase Cloud Functions (2nd gen)",
+  "main": "index.js",
+  "engines": { "node": "20" },
+  "dependencies": {
+    "firebase-functions": "^5.0.0",
+    "ws": "^8.18.0"
+  }
+}

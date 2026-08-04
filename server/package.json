@@ -5,10 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev":   "node --watch index.js"
+    "dev": "node --watch index.js"
   },
   "dependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.21.2"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
