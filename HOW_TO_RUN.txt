@@ -18,8 +18,23 @@ Option C — Python:
 NOTE: Must be served over HTTP (not file://) because ES modules require CORS.
 
 
-WITH MULTIPLAYER SERVER
------------------------
+WITH MULTIPLAYER SERVER (LIVE)
+-----------------------------
+  The production WebSocket server runs on Google Cloud Run:
+    wss://shin-sekai-ws-442096718896.asia-southeast1.run.app
+  The live client (https://world-urdog.web.app) connects to it automatically.
+  Open the site in two browsers/devices → both join the same room (max 10).
+
+  Redeploy server (after changing server/):
+    gcloud run deploy shin-sekai-ws --source server --region asia-southeast1 \
+      --allow-unauthenticated --port 8080 --timeout=3600 \
+      --max-instances=1 --min-instances=0 --cpu=1 --memory=256Mi --concurrency=1000
+
+  Redeploy client (after changing src/):
+    npx firebase deploy --only hosting:world-urdog
+
+LOCAL MULTIPLAYER SERVER (dev only)
+-----------------------------------
   Terminal 1 (server):
     cd server
     npm install
@@ -29,8 +44,8 @@ WITH MULTIPLAYER SERVER
   Terminal 2 (client):
     cd ..
     npx serve . -p 8080
-
-  Open http://localhost:8080 in two browser tabs to see two players.
+    # Open http://localhost:8080?ws=ws://localhost:3030
+    # (?ws= override lets the local client use the local server)
 
 
 CONTROLS
