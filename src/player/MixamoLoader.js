@@ -181,7 +181,8 @@ export function createMixamoAvatar() {
 
       obj.material = new THREE.MeshBasicMaterial({
         map: tex,
-        skinning: true,
+        // NOTE: three r168 detects skinning automatically via object.isSkinnedMesh.
+        // Do NOT pass `skinning: true` here — it's no longer a material property.
       });
     }
   });

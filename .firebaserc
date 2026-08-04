@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "urdog-1"
-  }
+  },
+  "targets": {
+    "urdog-1": {
+      "hosting": {
+        "world-urdog": [
+          "world-urdog"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

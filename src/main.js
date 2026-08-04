@@ -21,6 +21,7 @@ import { wind }            from './world/wind.js';
 import { loadAllModels }         from './player/ModelLoader.js';
 import { updateCharacterTime }   from './player/MixamoLoader.js';
 import { LocalPlayer }           from './player/LocalPlayer.js';
+import { RemotePlayer }          from './player/RemotePlayer.js';
 import { NpcCrowd }              from './player/NpcCrowd.js';
 import { KeyboardMouseControls } from './player/controls/KeyboardMouse.js';
 import { TouchJoystick }         from './player/controls/TouchJoystick.js';
@@ -129,6 +130,36 @@ async function main() {
   /* ── NPC crowd ── */
   const crowd = new NpcCrowd(scene);
   crowd.setCrowd(7);
+
+  /* ── Network players (real humans from the room server) ── */
+  const netPlayers = new Map(); // playerId → RemotePlayer
+
+  function addNetPlayer(id, username, state) {
+    if (netPlayers.has(id)) return netPlayers.get(id); // already tracked — return it so callers can applySnapshot
+    const colorHex = state?.color ?? PLAYER_COLORS[0].hex;
+    const mIdx     = state?.modelIndex;
+    const rp = new RemotePlayer(scene, id, username || 'guest', 'online', colorHex, mIdx);
+    netPlayers.set(id, rp);
+    return rp;
+  }
+
+  function removeNetPlayer(id) {
+    const rp = netPlayers.get(id);
+    if (rp) { rp.remove(scene); netPlayers.delete(id); }
+  }
+
+  function clearNetPlayers() {
+    for (const id of [...netPlayers.keys()]) removeNetPlayer(id);
+  }
+
+  /* ── Apply server player list (snapshot) or individual join ── */
+  function applyServerPlayers(players) {
+    for (const p of players) {
+      if (!p || p.playerId === net.playerId) continue; // skip self
+      const rp = addNetPlayer(p.playerId, p.username, p.state);
+      rp?.applySnapshot(p);
+    }
+  }
 
   /* ── Keyboard controls ── */
   const kb = new KeyboardMouseControls();
@@ -250,17 +281,58 @@ async function main() {
     settings.setRoomInfo(e.detail.roomCode || e.detail.roomId, e.detail.count, e.detail.max);
   });
 
-  net.addEventListener('roomUpdate', e => {
-    settings.setRoomInfo(e.detail.roomCode, e.detail.count, e.detail.max);
-  });
-
   net.addEventListener('roomList', e => {
     settings.setRoomList(e.detail.rooms);
   });
 
   net.addEventListener('roomSwitched', e => {
     settings.setRoomInfo(e.detail.roomCode, e.detail.count, e.detail.max);
+    // New room = different occupants; drop stale remote players
+    clearNetPlayers();
   });
+
+  /* ── Remote player lifecycle (real humans in the room) ── */
+  net.addEventListener('connected', () => {
+    // We're online — hide the fake NPC crowd so the world shows real players
+    crowd.setCrowd(0);
+  });
+
+  net.addEventListener('disconnected', () => {
+    // Back to offline — repopulate NPC crowd
+    clearNetPlayers();
+    crowd.setCrowd(7);
+  });
+
+  net.addEventListener('snapshot', e => {
+    applyServerPlayers(e.detail.players || []);
+  });
+
+  net.addEventListener('join', e => {
+    const p = e.detail.player;
+    if (!p || p.playerId === net.playerId) return;
+    const rp = addNetPlayer(p.playerId, p.username, p.state);
+    rp?.applySnapshot(p);
+  });
+
+  net.addEventListener('leave', e => {
+    removeNetPlayer(e.detail.playerId);
+  });
+
+  net.addEventListener('roomUpdate', e => {
+    settings.setRoomInfo(e.detail.roomCode, e.detail.count, e.detail.max);
+    // Sync remote roster to whatever the server says the room has
+    const seen = new Set();
+    for (const p of e.detail.players || []) {
+      if (!p || p.playerId === net.playerId) continue;
+      seen.add(p.playerId);
+      const rp = addNetPlayer(p.playerId, p.username, p.state);
+      rp?.applySnapshot(p);
+    }
+    for (const id of [...netPlayers.keys()]) {
+      if (!seen.has(id)) removeNetPlayer(id);
+    }
+  });
+
   net.connect(username, localPlayer.color);
 
   /* ── Loading complete ── */
@@ -312,6 +384,11 @@ async function main() {
 
     /* -- NPC crowd -- */
     crowd.update(dt, t, energy);
+
+    /* -- Network players (real humans) -- */
+    for (const rp of netPlayers.values()) {
+      rp.update(dt, t, energy);
+    }
 
     /* -- Grass wind uniform -- */
     grassField.setWind(wind.dir, wind.strength, t);
@@ -417,11 +494,12 @@ async function main() {
     }
 
     /* -- HUD -- */
+    const visibleCount = net.online ? netPlayers.size + 1 : crowd.count + 1;
     hud.update(
       dt,
       rendererSys.info,
       NET.TICK_HZ,
-      crowd.count + 1,
+      visibleCount,
       timeline.formatClock(),
       track?.name ?? 'warmup',
       net.roomId,
