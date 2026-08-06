@@ -13,6 +13,7 @@ import {
   buildSkyNumbers, buildMotes, buildDarkBlob, buildCountdown,
 } from './world/environment.js';
 import { buildEvangelionCrosses } from './world/EvangelionCrosses.js';
+import { buildMonoliths }        from './world/Monoliths.js';
 import { buildGrassField } from './world/GrassField.js';  // MdsGzS exact shader
 import { buildGodRays }    from './world/GodRays.js';
 import { wind }            from './world/wind.js';
@@ -96,6 +97,9 @@ async function main() {
 
   /* ── Evangelion neon crosses (4) ── */
   const evangelionCrosses = buildEvangelionCrosses(scene);
+
+  /* ── Giant geometric monoliths (2001: A Space Odyssey view) ── */
+  const monoliths = buildMonoliths(scene);
 
   const { body: tri1 } = buildTripod(scene, 70,  -30, 1.1);
   const { body: tri2 } = buildTripod(scene, 120,  40, 0.8);
@@ -417,6 +421,9 @@ async function main() {
 
     /* -- God rays pulse -- */
     godRays.update(t, energy);
+
+    /* -- Monolith neon trim pulse -- */
+    monoliths.update(t, energy);
 
     /* -- Sky / clouds -- */
     sky.update(dt, t);
